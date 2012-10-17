@@ -30,7 +30,7 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
     self.Category = [[NSArray alloc] initWithObjects:
-                     @"Fire",@"Tornado",@"Flood",@"Hurricane",@"Earthquake",@"Shots Fired",
+                     @"Shots Fired",@"Fire",@"Tornado",@"Flood",@"Hurricane",@"Earthquake",
                      nil];
     
     self.Severity = [[NSArray alloc]initWithObjects:
@@ -38,11 +38,11 @@
                      nil];
     
     self.Long = [[NSArray alloc]initWithObjects:
-                 @"180W",@"150W",@"120W",@"90W",@"60W",@"30W",@"--0--",@"30E",@"60E",@"90E",@"120E",@"150E",@"180E",
+                 @"Here",@"180W",@"150W",@"120W",@"90W",@"60W",@"30W",@"--0--",@"30E",@"60E",@"90E",@"120E",@"150E",@"180E",
                  nil];
     
     self.Lat = [[NSArray alloc]initWithObjects:
-                @"90N",@"75N",@"60N",@"45N",@"30N",@"15N",@"--0--",@"15S",@"30S",@"45S",@"60S",@"75S",@"90S",
+                @"Here",@"90N",@"75N",@"60N",@"45N",@"30N",@"15N",@"--0--",@"15S",@"30S",@"45S",@"60S",@"75S",@"90S",
                 nil];
     
     //self.City = [[NSArray alloc]initWithObjects:
