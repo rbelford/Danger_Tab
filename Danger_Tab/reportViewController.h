@@ -7,14 +7,19 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreLocation/CLGeocoder.h>
+#import "DTMutableObject.h"
 
 @interface reportViewController : UIViewController <UIPickerViewDelegate, UIPickerViewDataSource>
 
+@property (nonatomic,retain) IBOutlet UITextField *localeText;
 @property (strong, nonatomic) IBOutlet UIPickerView *picker;
-@property (strong, nonatomic) NSArray *Category;
-@property (strong, nonatomic) NSArray *Severity;
-@property (strong, nonatomic) NSArray *Long;
-@property (strong, nonatomic) NSArray *Lat;
-//@property (strong, nonatomic) NSArray *City;
+@property  (nonatomic,retain)CLGeocoder *geoCoder;
+@property NSArray *categoryStrings;
+@property (strong, nonatomic) NSArray *severityStrings; 
+@property DTMutableObject *updateObj; // the model's variables, see DTMutableObject.h
+
+- (IBAction)onReturnPressed:(id)sender;
+- (IBAction)onSubmitPressed:(id)sender;
 
 @end

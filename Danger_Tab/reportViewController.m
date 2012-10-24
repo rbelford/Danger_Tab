@@ -6,7 +6,11 @@
 //  Copyright (c) 2012 rbelford. All rights reserved.
 //
 
+#import <CoreLocation/CLLocation.h>
+#import <CoreLocation/CLGeocoder.h>
+#import <CoreLocation/CLPlacemark.h>
 #import "reportViewController.h"
+#import "DTMutableObject.h"
 
 @interface reportViewController ()
 
@@ -14,7 +18,11 @@
 
 @implementation reportViewController
 
-@synthesize Category,Severity,Long,Lat; //,City;
+@synthesize picker = _picker;
+@synthesize updateObj = _updateObj;
+@synthesize severityStrings = _severityStrings;
+@synthesize categoryStrings = _categoryStrings;
+@synthesize geoCoder = _geoCoder;
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -29,54 +37,26 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view.
-    self.Category = [[NSArray alloc] initWithObjects:
-                     @"Shots Fired",@"Fire",@"Tornado",@"Flood",@"Hurricane",@"Earthquake",
-                     nil];
-    
-    self.Severity = [[NSArray alloc]initWithObjects:
-                     @"1",@"2",@"3",@"4",@"5",@"6",@"7",@"8",@"9",@"10",
-                     nil];
-    
-    self.Long = [[NSArray alloc]initWithObjects:
-                 @"Here",@"180W",@"150W",@"120W",@"90W",@"60W",@"30W",@"--0--",@"30E",@"60E",@"90E",@"120E",@"150E",@"180E",
-                 nil];
-    
-    self.Lat = [[NSArray alloc]initWithObjects:
-                @"Here",@"90N",@"75N",@"60N",@"45N",@"30N",@"15N",@"--0--",@"15S",@"30S",@"45S",@"60S",@"75S",@"90S",
-                nil];
-    
-    //self.City = [[NSArray alloc]initWithObjects:
-         //        @"NewYork",@"Paris",@"Moscow",@"Bejing",@"Capetown",@"Syndey",@"Buenos Aires",nil];
+    self.categoryStrings = [[NSArray alloc] initWithObjects:
+                    @"Fire",@"Accident",@"Riot",@"Gunfire",nil];
+    self.severityStrings = [NSArray arrayWithObjects: @"1",@"2",@"3",
+                    @"4",@"5",@"6",@"7",@"8",@"9",@"10",nil];
+    self.updateObj = [[DTMutableObject alloc] initWithZeros];
 }
 
 - (NSInteger)numberOfComponentsInPickerView:(UIPickerView *)pickerView
 {
-    return 4;
+    return 2;
 }
 
 - (CGFloat)pickerView:(UIPickerView *)pickerView widthForComponent:(NSInteger)component
 {
     //NSLog(@"in row width");
-    switch (component)
-    {
-        case 0: // category
-            return 125;
-            break;
-        case 1: // Severity
-            return 40;
-            break;
-        case 2: // Long
-            return 70;
-            break;
-        case 3: // Lat
-            return 55;
-            break;
-        /*case 4: // City
-            return 200;
-            break;*/
-        default:
-            return 0;
-            break;
+    if (component == 0) {
+        return 105; // category width
+    }
+    else {
+        return 50;   // severity width
     }
 }
 
@@ -88,27 +68,11 @@
 
 - (NSInteger)pickerView:(UIPickerView *)pickerView numberOfRowsInComponent:(NSInteger)component
 {
-    switch (component)
-    {
-        case 0:
-            return [Category count];
-            break;
-        case 1:
-            return [Severity count];
-            break;
-        case 2:
-            return [Long count];
-            break;
-        case 3:
-            return [Lat count];
-            break;
-        /*case 4:
-            return [City count];
-            break;*/
-            
-        default:
-            return 0;
-            break;
+    if (component == 0) { // category #rows
+        return [self.categoryStrings count];
+    }
+    else { // severity #rows
+        return [self.severityStrings count];
     }
 }
 
@@ -116,34 +80,65 @@
              titleForRow:(NSInteger)row
             forComponent:(NSInteger)component
 {
-    switch (component)
-    {
-        case 0:
-            return [Category objectAtIndex:row];
-            break;
-        case 1:
-            return [Severity objectAtIndex:row];
-            break;
-        case 2:
-            return [Long objectAtIndex:row];
-            break;
-        case 3:
-            return [Lat objectAtIndex:row];
-            break;
-        /*case 4:
-            return [City objectAtIndex:row];
-            break;*/
-        default:
-            return @"Error";
-            break;
+    if (component == 0) { // category strings
+        return [self.categoryStrings objectAtIndex:row];
+    }
+    else { // severity strings
+        return [self.severityStrings objectAtIndex:row];
     }
 }
 
 -(void)pickerView:(UIPickerView *)pickerView didSelectRow:(NSInteger)row
       inComponent:(NSInteger)component
 {
+    if (component == 0) { // category selected
+        self.updateObj.category = row;
+    } else { // severity selected
+        self.updateObj.severity = row+1; // indeces start at 0
+    }
     NSLog(@"Report Selection: row=%d component=%d",row,component);
+    NSLog(@"Report Selection: category=%d severity=%d",self.updateObj.category,
+                                                       self.updateObj.severity);
 }
+
+- (IBAction)onReturnPressed:(id)sender
+{
+    self.updateObj.locale = self.localeText.text;
+    NSLog(@"onReturnPressed, text field: %@",self.updateObj.locale);
+    self.localeText.text = @"";
+    [sender resignFirstResponder];
+}
+
+
+- (IBAction)onSubmitPressed:(id)sender
+{
+    if (!self.geoCoder) {
+        self.geoCoder = [[CLGeocoder alloc] init];
+    }
+    [self.geoCoder geocodeAddressString:self.updateObj.locale
+                 completionHandler:
+                    ^(NSArray* placemarks, NSError* error)
+                     {
+                        if (error != nil)
+                            NSLog(@"Error: %@", error);
+                        else
+                            for (CLPlacemark* aPlacemark in placemarks)
+                                {
+                                    self.updateObj.latitude = aPlacemark.location.coordinate.latitude;
+                                    self.updateObj.longitude = aPlacemark.location.coordinate.longitude;
+                                    NSLog(@"setting latitude %f",self.updateObj.latitude);
+                                    NSLog(@"setting longitude %f",self.updateObj.longitude);
+                                }       
+                     }];
+    // Need to wait for completion of geocoding ???????
+    NSLog(@"*************************");
+    NSLog(@"category= %d",self.updateObj.category);
+    NSLog(@"severity= %d",self.updateObj.severity);
+    NSLog(@"locale= %@",self.updateObj.locale);
+    NSLog(@"latitude= %f",self.updateObj.latitude);
+    NSLog(@"longitude= %f",self.updateObj.longitude);
+}
+
 
 - (void)didReceiveMemoryWarning
 {
